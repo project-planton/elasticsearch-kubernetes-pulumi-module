@@ -17,7 +17,8 @@ require (
 
 require (
 	github.com/plantoncloud/planton-cloud-apis v0.1.0
-	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.52
+	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240808151947-30fe31a468ca
+	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.56
 )
 
 require (
@@ -74,6 +75,7 @@ require (
 	github.com/pkg/term v1.1.0 // indirect
 	github.com/pulumi/appdash v0.0.0-20231130102222-75f619a67231 // indirect
 	github.com/pulumi/esc v0.9.1 // indirect
+	github.com/pulumi/pulumi-gcp/sdk/v7 v7.29.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
