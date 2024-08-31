@@ -1,4 +1,4 @@
-package pkg
+package outputs
 
 import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
