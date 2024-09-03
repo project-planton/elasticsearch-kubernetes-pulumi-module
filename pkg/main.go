@@ -2,12 +2,11 @@ package pkg
 
 import (
 	"github.com/pkg/errors"
-	elasticsearchv1 "github.com/plantoncloud/kubernetes-crd-pulumi-types/pkg/elasticsearch/elasticsearch/v1"
+	elasticsearchv1 "github.com/plantoncloud/kubernetes-crd-pulumi-types/pkg/elasticsearch/elasticsearch/v1beta1"
+	kibanav1 "github.com/plantoncloud/kubernetes-crd-pulumi-types/pkg/elasticsearch/kibana/v1beta1"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
-	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/pulumikubernetesprovider"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
-	"github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/helm/v3"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -24,52 +23,6 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		s.Input.KubernetesClusterCredential, "kubernetes")
 	if err != nil {
 		return errors.Wrap(err, "failed to setup gcp provider")
-	}
-
-	createdOperatorNamespace, err := kubernetescorev1.NewNamespace(ctx, "elastic-system",
-		&kubernetescorev1.NamespaceArgs{
-			Metadata: metav1.ObjectMetaPtrInput(
-				&metav1.ObjectMetaArgs{
-					Name: pulumi.String("elastic-system"),
-					//Labels: pulumi.ToStringMap(locals.KubernetesLabels),
-				}),
-		}, pulumi.Provider(kubernetesProvider))
-	if err != nil {
-		return errors.Wrapf(err, "failed to create namespace")
-	}
-
-	//create helm-release
-	createdEckOperatorHelmRelease, err := helm.NewRelease(ctx, "eck-operator",
-		&helm.ReleaseArgs{
-			Name:            pulumi.String("eck-operator"),
-			Namespace:       createdOperatorNamespace.Metadata.Name(),
-			Chart:           pulumi.String("eck-operator"),
-			Version:         pulumi.String("2.14.0"),
-			CreateNamespace: pulumi.Bool(false),
-			Atomic:          pulumi.Bool(false),
-			CleanupOnFail:   pulumi.Bool(true),
-			WaitForJobs:     pulumi.Bool(true),
-			Timeout:         pulumi.Int(180),
-			Values: pulumi.Map{
-				"configKubernetes": pulumi.Map{
-					"inherited_labels": pulumi.ToStringArray(
-						[]string{
-							kuberneteslabelkeys.Resource,
-							kuberneteslabelkeys.Organization,
-							kuberneteslabelkeys.Environment,
-							kuberneteslabelkeys.ResourceKind,
-							kuberneteslabelkeys.ResourceId,
-						},
-					),
-				},
-			},
-			RepositoryOpts: helm.RepositoryOptsArgs{
-				Repo: pulumi.String("https://helm.elastic.co"),
-			},
-		}, pulumi.Parent(createdOperatorNamespace),
-		pulumi.IgnoreChanges([]string{"status", "description", "resourceNames"}))
-	if err != nil {
-		return errors.Wrap(err, "failed to create helm release")
 	}
 
 	createdNamespace, err := kubernetescorev1.NewNamespace(ctx, locals.ElasticsearchKubernetes.Metadata.Id,
@@ -108,8 +61,8 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 								"cpu":    pulumi.String("1"),
 							},
 							"limits": pulumi.Map{
-								"memory": pulumi.String("4Gi"),
-								"cpu":    pulumi.String("2"),
+								"memory": pulumi.String("2Gi"),
+								"cpu":    pulumi.String("1"),
 							},
 						},
 					},
@@ -141,8 +94,8 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 								"cpu":    pulumi.String("2"),
 							},
 							"limits": pulumi.Map{
-								"memory": pulumi.String("8Gi"),
-								"cpu":    pulumi.String("4"),
+								"memory": pulumi.String("4Gi"),
+								"cpu":    pulumi.String("2"),
 							},
 						},
 					},
@@ -168,17 +121,61 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		},
 	})
 
-	elasticsearchv1.NewElasticsearch(ctx, locals.ElasticsearchKubernetes.Metadata.Id, &elasticsearchv1.ElasticsearchArgs{
+	createdElasticSearch, err := elasticsearchv1.NewElasticsearch(ctx, locals.ElasticsearchKubernetes.Metadata.Name, &elasticsearchv1.ElasticsearchArgs{
 		Metadata: metav1.ObjectMetaArgs{
-			Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Id),
+			Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
 			Namespace: createdNamespace.Metadata.Name(),
 			Labels:    pulumi.ToStringMap(s.Labels),
+			Annotations: pulumi.StringMap{
+				"pulumi.com/patchForce": pulumi.String("true"),
+			},
 		},
 		Spec: &elasticsearchv1.ElasticsearchSpecArgs{
 			NodeSets: nodeSets,
-			Version:  pulumi.String("8.13.0"),
+			Version:  pulumi.String("8.15.1"),
 		},
-	}, pulumi.Parent(createdNamespace), pulumi.DependsOn([]pulumi.Resource{createdEckOperatorHelmRelease}))
+	}, pulumi.Parent(createdNamespace))
+	if err != nil {
+		return errors.Wrapf(err, "failed to create elastic search")
+	}
+
+	_, err = kibanav1.NewKibana(ctx, locals.ElasticsearchKubernetes.Metadata.Id, &kibanav1.KibanaArgs{
+		Metadata: metav1.ObjectMetaArgs{
+			Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
+			Namespace: createdNamespace.Metadata.Name(),
+			Labels:    pulumi.ToStringMap(s.Labels),
+		},
+		Spec: &kibanav1.KibanaSpecArgs{
+			Version: pulumi.String("8.15.1"),
+			Count:   pulumi.Int(1),
+			PodTemplate: pulumi.Map{
+				"spec": pulumi.Map{
+					"containers": pulumi.Array{
+						pulumi.Map{
+							"name": pulumi.String("kibana"),
+							"resources": pulumi.Map{
+								"requests": pulumi.Map{
+									"memory": pulumi.String("512Mi"),
+									"cpu":    pulumi.String("500m"),
+								},
+								"limits": pulumi.Map{
+									"memory": pulumi.String("512Mi"),
+									"cpu":    pulumi.String("500m"),
+								},
+							},
+						},
+					},
+				},
+			},
+			ElasticsearchRef: kibanav1.KibanaSpecElasticsearchRefArgs{
+				Name:      createdElasticSearch.Metadata.Name().Elem(),
+				Namespace: createdNamespace.Metadata.Name(),
+			},
+		},
+	}, pulumi.Parent(createdNamespace), pulumi.DependsOn([]pulumi.Resource{createdElasticSearch}))
+	if err != nil {
+		return errors.Wrapf(err, "failed to create kibana instance for the elastic search instance")
+	}
 
 	return nil
 }
