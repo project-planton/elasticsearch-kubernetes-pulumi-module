@@ -4,19 +4,25 @@ import (
 	"fmt"
 	"github.com/plantoncloud/elasticsearch-kubernetes-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 type Locals struct {
-	IngressExternalHostname      string
-	IngressInternalHostname      string
-	KubePortForwardCommand       string
-	KubeServiceFqdn              string
-	KubeServiceName              string
-	Namespace                    string
-	ElasticsearchKubernetes      *elasticsearchkubernetes.ElasticsearchKubernetes
-	ElasticsearchPodSectorLabels map[string]string
+	ElasticsearchIngressExternalHostname string
+	ElasticsearchIngressInternalHostname string
+	ElasticsearchKubePortForwardCommand  string
+	ElasticsearchKubeServiceFqdn         string
+	ElasticsearchKubeServiceName         string
+	Namespace                            string
+	ElasticsearchKubernetes              *elasticsearchkubernetes.ElasticsearchKubernetes
+	KibanaIngressExternalHostname        string
+	KibanaIngressInternalHostname        string
+	KibanaKubePortForwardCommand         string
+	KibanaKubeServiceFqdn                string
+	KibanaKubeServiceName                string
+	IngressHostnames                     []string
+	IngressCertClusterIssuerName         string
+	IngressCertSecretName                string
 }
 
 func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) *Locals {
@@ -26,29 +32,43 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.E
 
 	elasticsearchKubernetes := stackInput.ApiResource
 
+	ctx.Export(outputs.ElasticUsername, pulumi.String("elastic"))
+	ctx.Export(outputs.ElasticPasswordSecretName, pulumi.Sprintf("%s-es-elastic-user", elasticsearchKubernetes.Metadata.Name))
+
 	//decide on the namespace
 	locals.Namespace = elasticsearchKubernetes.Metadata.Id
 
-	locals.ElasticsearchPodSectorLabels = map[string]string{
-		"planton.cloud/resource-kind": apiresourcekind.ApiResourceKind_elasticsearch_kubernetes.String(),
-		"planton.cloud/resource-id":   elasticsearchKubernetes.Metadata.Id,
-	}
-
-	locals.KubeServiceName = fmt.Sprintf("%s-master", elasticsearchKubernetes.Metadata.Name)
+	locals.ElasticsearchKubeServiceName = fmt.Sprintf("%s-es-http", elasticsearchKubernetes.Metadata.Name)
 
 	//export kubernetes service name
-	ctx.Export(outputs.ServiceOutputName, pulumi.String(locals.KubeServiceName))
+	ctx.Export(outputs.ElasticsearchService, pulumi.String(locals.ElasticsearchKubeServiceName))
 
-	locals.KubeServiceFqdn = fmt.Sprintf("%s.%s.svc.cluster.local", locals.KubeServiceName, locals.Namespace)
+	locals.ElasticsearchKubeServiceFqdn = fmt.Sprintf("%s.%s.svc.cluster.local", locals.ElasticsearchKubeServiceName, locals.Namespace)
 
 	//export kubernetes endpoint
-	ctx.Export(outputs.KubeEndpointOutputName, pulumi.String(locals.KubeServiceFqdn))
+	ctx.Export(outputs.ElasticsearchKubeEndpoint, pulumi.String(locals.ElasticsearchKubeServiceFqdn))
 
-	locals.KubePortForwardCommand = fmt.Sprintf("kubectl port-forward -n %s service/%s 8080:8080",
-		locals.Namespace, locals.KubeServiceName)
+	locals.ElasticsearchKubePortForwardCommand = fmt.Sprintf("kubectl port-forward -n %s service/%s %d:%d",
+		locals.Namespace, locals.ElasticsearchKubeServiceName, vars.ElasticsearchPort, vars.ElasticsearchPort)
 
 	//export kube-port-forward command
-	ctx.Export(outputs.PortForwardCommandOutputName, pulumi.String(locals.KubePortForwardCommand))
+	ctx.Export(outputs.ElasticsearchPortForwardCommand, pulumi.String(locals.ElasticsearchKubePortForwardCommand))
+
+	locals.KibanaKubeServiceName = fmt.Sprintf("%s-kb-http", elasticsearchKubernetes.Metadata.Name)
+
+	//export kubernetes service name
+	ctx.Export(outputs.KibanaService, pulumi.String(locals.KibanaKubeServiceName))
+
+	locals.KibanaKubeServiceFqdn = fmt.Sprintf("%s.%s.svc.cluster.local", locals.KibanaKubeServiceName, locals.Namespace)
+
+	//export kubernetes endpoint
+	ctx.Export(outputs.KibanaKubeEndpoint, pulumi.String(locals.KibanaKubeServiceFqdn))
+
+	locals.KibanaKubePortForwardCommand = fmt.Sprintf("kubectl port-forward -n %s service/%s %d:%d",
+		locals.Namespace, locals.KibanaKubeServiceName, vars.KibanaPort, vars.KibanaPort)
+
+	//export kube-port-forward command
+	ctx.Export(outputs.KibanaPortForwardCommand, pulumi.String(locals.KibanaKubePortForwardCommand))
 
 	if elasticsearchKubernetes.Spec.Ingress == nil ||
 		!elasticsearchKubernetes.Spec.Ingress.IsEnabled ||
@@ -56,15 +76,34 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.E
 		return locals
 	}
 
-	locals.IngressExternalHostname = fmt.Sprintf("%s.%s", elasticsearchKubernetes.Metadata.Id,
+	locals.ElasticsearchIngressExternalHostname = fmt.Sprintf("%s.%s", elasticsearchKubernetes.Metadata.Id,
 		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
 
-	locals.IngressInternalHostname = fmt.Sprintf("%s-internal.%s", elasticsearchKubernetes.Metadata.Id,
+	locals.ElasticsearchIngressInternalHostname = fmt.Sprintf("%s-internal.%s", elasticsearchKubernetes.Metadata.Id,
 		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+
+	locals.KibanaIngressExternalHostname = fmt.Sprintf("%s-kb.%s", elasticsearchKubernetes.Metadata.Id,
+		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+
+	locals.KibanaIngressInternalHostname = fmt.Sprintf("%s-kb-internal.%s", elasticsearchKubernetes.Metadata.Id,
+		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+
+	locals.IngressHostnames = []string{
+		locals.ElasticsearchIngressExternalHostname,
+		locals.ElasticsearchIngressInternalHostname,
+		locals.KibanaIngressExternalHostname,
+		locals.KibanaIngressInternalHostname,
+	}
+
+	locals.IngressCertClusterIssuerName = elasticsearchKubernetes.Spec.Ingress.EndpointDomainName
+
+	locals.IngressCertSecretName = elasticsearchKubernetes.Metadata.Id
 
 	//export ingress hostnames
-	ctx.Export(outputs.IngressExternalHostnameOutputName, pulumi.String(locals.IngressExternalHostname))
-	ctx.Export(outputs.IngressInternalHostnameOutputName, pulumi.String(locals.IngressInternalHostname))
+	ctx.Export(outputs.ElasticsearchIngressExternalHostname, pulumi.String(locals.ElasticsearchIngressExternalHostname))
+	ctx.Export(outputs.ElasticsearchIngressInternalHostname, pulumi.String(locals.ElasticsearchIngressInternalHostname))
+	ctx.Export(outputs.KibanaIngressExternalHostname, pulumi.String(locals.KibanaIngressExternalHostname))
+	ctx.Export(outputs.KibanaIngressInternalHostname, pulumi.String(locals.KibanaIngressInternalHostname))
 
 	return locals
 }
