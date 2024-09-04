@@ -95,7 +95,7 @@ func elasticsearch(ctx *pulumi.Context,
 	}
 
 	if locals.ElasticsearchKubernetes.Spec.KibanaContainer.IsEnabled {
-		_, err = kibanav1.NewKibana(ctx, locals.ElasticsearchKubernetes.Metadata.Id, &kibanav1.KibanaArgs{
+		_, err = kibanav1.NewKibana(ctx, locals.ElasticsearchKubernetes.Metadata.Name, &kibanav1.KibanaArgs{
 			Metadata: metav1.ObjectMetaArgs{
 				Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
 				Namespace: createdNamespace.Metadata.Name(),
