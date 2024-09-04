@@ -100,6 +100,9 @@ func elasticsearch(ctx *pulumi.Context,
 				Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
 				Namespace: createdNamespace.Metadata.Name(),
 				Labels:    pulumi.ToStringMap(labels),
+				Annotations: pulumi.StringMap{
+					"pulumi.com/patchForce": pulumi.String("true"),
+				},
 			},
 			Spec: &kibanav1.KibanaSpecArgs{
 				Version: pulumi.String(vars.ElasticsearchVersion),
