@@ -21,9 +21,9 @@ require (
 
 require (
 	github.com/plantoncloud/kubernetes-crd-pulumi-types v0.0.0-20240903231550-b86827cb2eb9
-	github.com/plantoncloud/planton-cloud-apis v0.1.38
-	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240830131227-ad81d90f7d42
-	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.57
+	github.com/plantoncloud/planton-cloud-apis v0.1.43
+	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240905105923-c9458da08f51
+	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.58
 )
 
 require (

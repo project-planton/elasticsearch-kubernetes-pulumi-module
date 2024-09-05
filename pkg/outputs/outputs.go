@@ -2,6 +2,7 @@ package outputs
 
 import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/kubernetes"
 	"github.com/plantoncloud/stack-job-runner-golang-sdk/pkg/automationapi/autoapistackoutput"
 	"github.com/pulumi/pulumi/sdk/v3/go/auto"
 )
@@ -26,18 +27,26 @@ const (
 func PulumiOutputToStackOutputsConverter(pulumiOutputs auto.OutputMap,
 	input *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) *elasticsearchkubernetes.ElasticsearchKubernetesStackOutputs {
 	return &elasticsearchkubernetes.ElasticsearchKubernetesStackOutputs{
-		Namespace:                       autoapistackoutput.GetVal(pulumiOutputs, Namespace),
-		ElasticUsername:                 autoapistackoutput.GetVal(pulumiOutputs, ElasticUsername),
-		ElasticPasswordSecretName:       autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretName),
-		ElasticsearchService:            autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchService),
-		ElasticsearchPortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchPortForwardCommand),
-		ElasticsearchKubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchKubeEndpoint),
-		ElasticsearchExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressExternalHostname),
-		ElasticsearchInternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressInternalHostname),
-		KibanaService:                   autoapistackoutput.GetVal(pulumiOutputs, KibanaService),
-		KibanaPortForwardCommand:        autoapistackoutput.GetVal(pulumiOutputs, KibanaPortForwardCommand),
-		KibanaKubeEndpoint:              autoapistackoutput.GetVal(pulumiOutputs, KibanaKubeEndpoint),
-		KibanaExternalHostname:          autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressExternalHostname),
-		KibanaInternalHostname:          autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressInternalHostname),
+		Namespace: autoapistackoutput.GetVal(pulumiOutputs, Namespace),
+		Elasticsearch: &elasticsearchkubernetes.ElasticsearchKubernetesElasticsearchStackOutputs{
+			Username: autoapistackoutput.GetVal(pulumiOutputs, ElasticUsername),
+			//ElasticPasswordSecretName:       ,
+			Service:            autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchService),
+			PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchPortForwardCommand),
+			KubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchKubeEndpoint),
+			ExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressExternalHostname),
+			InternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressInternalHostname),
+			PasswordSecret: &kubernetes.KubernernetesSecretKey{
+				Name: autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretName),
+				Key:  "coming-soon",
+			},
+		},
+		Kibana: &elasticsearchkubernetes.ElasticsearchKubernetesKibanaStackOutputs{
+			Service:            autoapistackoutput.GetVal(pulumiOutputs, KibanaService),
+			PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, KibanaPortForwardCommand),
+			KubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, KibanaKubeEndpoint),
+			ExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressExternalHostname),
+			InternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressInternalHostname),
+		},
 	}
 }
