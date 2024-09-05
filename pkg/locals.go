@@ -34,6 +34,7 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.E
 
 	ctx.Export(outputs.ElasticUsername, pulumi.String("elastic"))
 	ctx.Export(outputs.ElasticPasswordSecretName, pulumi.Sprintf("%s-es-elastic-user", elasticsearchKubernetes.Metadata.Name))
+	ctx.Export(outputs.ElasticPasswordSecretKey, pulumi.String("elastic"))
 
 	//decide on the namespace
 	locals.Namespace = elasticsearchKubernetes.Metadata.Id

@@ -11,6 +11,7 @@ const (
 	Namespace                            = "namespace"
 	ElasticUsername                      = "username"
 	ElasticPasswordSecretName            = "password-secret-name"
+	ElasticPasswordSecretKey             = "password-secret-key"
 	ElasticsearchService                 = "elasticsearch-service"
 	ElasticsearchPortForwardCommand      = "elasticsearch-port-forward-command"
 	ElasticsearchKubeEndpoint            = "elasticsearch-kube-endpoint"
@@ -29,16 +30,15 @@ func PulumiOutputToStackOutputsConverter(pulumiOutputs auto.OutputMap,
 	return &elasticsearchkubernetes.ElasticsearchKubernetesStackOutputs{
 		Namespace: autoapistackoutput.GetVal(pulumiOutputs, Namespace),
 		Elasticsearch: &elasticsearchkubernetes.ElasticsearchKubernetesElasticsearchStackOutputs{
-			Username: autoapistackoutput.GetVal(pulumiOutputs, ElasticUsername),
-			//ElasticPasswordSecretName:       ,
 			Service:            autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchService),
 			PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchPortForwardCommand),
 			KubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchKubeEndpoint),
 			ExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressExternalHostname),
 			InternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressInternalHostname),
+			Username:           autoapistackoutput.GetVal(pulumiOutputs, ElasticUsername),
 			PasswordSecret: &kubernetes.KubernernetesSecretKey{
 				Name: autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretName),
-				Key:  "coming-soon",
+				Key:  autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretKey),
 			},
 		},
 		Kibana: &elasticsearchkubernetes.ElasticsearchKubernetesKibanaStackOutputs{
