@@ -11,8 +11,7 @@ import (
 
 func elasticsearch(ctx *pulumi.Context,
 	locals *Locals,
-	createdNamespace *kubernetescorev1.Namespace,
-	labels map[string]string) error {
+	createdNamespace *kubernetescorev1.Namespace) error {
 
 	var volumeClaimTemplates = &elasticsearchv1.ElasticsearchSpecNodeSetsVolumeClaimTemplatesArray{}
 	if locals.ElasticsearchKubernetes.Spec.ElasticsearchContainer.IsPersistenceEnabled {
@@ -39,7 +38,7 @@ func elasticsearch(ctx *pulumi.Context,
 		Metadata: metav1.ObjectMetaArgs{
 			Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
 			Namespace: createdNamespace.Metadata.Name(),
-			Labels:    pulumi.ToStringMap(labels),
+			Labels:    pulumi.ToStringMap(locals.Labels),
 			Annotations: pulumi.StringMap{
 				"pulumi.com/patchForce": pulumi.String("true"),
 			},
@@ -99,7 +98,7 @@ func elasticsearch(ctx *pulumi.Context,
 			Metadata: metav1.ObjectMetaArgs{
 				Name:      pulumi.String(locals.ElasticsearchKubernetes.Metadata.Name),
 				Namespace: createdNamespace.Metadata.Name(),
-				Labels:    pulumi.ToStringMap(labels),
+				Labels:    pulumi.ToStringMap(locals.Labels),
 				Annotations: pulumi.StringMap{
 					"pulumi.com/patchForce": pulumi.String("true"),
 				},

@@ -1,12 +1,5 @@
 package outputs
 
-import (
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/kubernetes"
-	"github.com/plantoncloud/stack-job-runner-golang-sdk/pkg/automationapi/autoapistackoutput"
-	"github.com/pulumi/pulumi/sdk/v3/go/auto"
-)
-
 const (
 	Namespace                            = "namespace"
 	ElasticUsername                      = "username"
@@ -24,29 +17,3 @@ const (
 	KibanaIngressExternalHostname = "kibana-ingress-external-hostname"
 	KibanaIngressInternalHostname = "kibana-ingress-internal-hostname"
 )
-
-func PulumiOutputToStackOutputsConverter(pulumiOutputs auto.OutputMap,
-	input *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) *elasticsearchkubernetes.ElasticsearchKubernetesStackOutputs {
-	return &elasticsearchkubernetes.ElasticsearchKubernetesStackOutputs{
-		Namespace: autoapistackoutput.GetVal(pulumiOutputs, Namespace),
-		Elasticsearch: &elasticsearchkubernetes.ElasticsearchKubernetesElasticsearchStackOutputs{
-			Service:            autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchService),
-			PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchPortForwardCommand),
-			KubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchKubeEndpoint),
-			ExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressExternalHostname),
-			InternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, ElasticsearchIngressInternalHostname),
-			Username:           autoapistackoutput.GetVal(pulumiOutputs, ElasticUsername),
-			PasswordSecret: &kubernetes.KubernernetesSecretKey{
-				Name: autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretName),
-				Key:  autoapistackoutput.GetVal(pulumiOutputs, ElasticPasswordSecretKey),
-			},
-		},
-		Kibana: &elasticsearchkubernetes.ElasticsearchKubernetesKibanaStackOutputs{
-			Service:            autoapistackoutput.GetVal(pulumiOutputs, KibanaService),
-			PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, KibanaPortForwardCommand),
-			KubeEndpoint:       autoapistackoutput.GetVal(pulumiOutputs, KibanaKubeEndpoint),
-			ExternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressExternalHostname),
-			InternalHostname:   autoapistackoutput.GetVal(pulumiOutputs, KibanaIngressInternalHostname),
-		},
-	}
-}

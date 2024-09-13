@@ -10,16 +10,11 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type ResourceStack struct {
-	Input  *elasticsearchkubernetes.ElasticsearchKubernetesStackInput
-	Labels map[string]string
-}
-
-func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
-	locals := initializeLocals(ctx, s.Input)
+func Resources(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) error {
+	locals := initializeLocals(ctx, stackInput)
 	//create kubernetes-provider from the credential in the stack-input
 	kubernetesProvider, err := pulumikubernetesprovider.GetWithKubernetesClusterCredential(ctx,
-		s.Input.KubernetesClusterCredential, "kubernetes")
+		stackInput.KubernetesClusterCredential, "kubernetes")
 	if err != nil {
 		return errors.Wrap(err, "failed to setup gcp provider")
 	}
@@ -29,7 +24,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 			Metadata: metav1.ObjectMetaPtrInput(
 				&metav1.ObjectMetaArgs{
 					Name:   pulumi.String(locals.ElasticsearchKubernetes.Metadata.Id),
-					Labels: pulumi.ToStringMap(s.Labels),
+					Labels: pulumi.ToStringMap(locals.Labels),
 				}),
 		}, pulumi.Provider(kubernetesProvider))
 	if err != nil {
@@ -39,12 +34,12 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 	//export name of the namespace
 	ctx.Export(outputs.Namespace, createdNamespace.Metadata.Name())
 
-	if err := elasticsearch(ctx, locals, createdNamespace, s.Labels); err != nil {
+	if err := elasticsearch(ctx, locals, createdNamespace); err != nil {
 		return errors.Wrap(err, "failed to create elastic search resources")
 	}
 
 	if locals.ElasticsearchKubernetes.Spec.Ingress.IsEnabled {
-		if err := ingress(ctx, locals, createdNamespace, kubernetesProvider, s.Labels); err != nil {
+		if err := ingress(ctx, locals, createdNamespace, kubernetesProvider); err != nil {
 			return errors.Wrap(err, "failed to create ingress resources")
 		}
 	}

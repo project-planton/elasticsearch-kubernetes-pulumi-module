@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/plantoncloud/elasticsearch-kubernetes-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
+	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"strconv"
 )
 
 type Locals struct {
@@ -23,6 +26,7 @@ type Locals struct {
 	IngressHostnames                     []string
 	IngressCertClusterIssuerName         string
 	IngressCertSecretName                string
+	Labels                               map[string]string
 }
 
 func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) *Locals {
@@ -31,6 +35,14 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.E
 	locals.ElasticsearchKubernetes = stackInput.ApiResource
 
 	elasticsearchKubernetes := stackInput.ApiResource
+
+	locals.Labels = map[string]string{
+		kuberneteslabelkeys.Environment:  stackInput.ApiResource.Spec.EnvironmentInfo.EnvId,
+		kuberneteslabelkeys.Organization: stackInput.ApiResource.Spec.EnvironmentInfo.OrgId,
+		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
+		kuberneteslabelkeys.ResourceId:   stackInput.ApiResource.Metadata.Id,
+		kuberneteslabelkeys.ResourceKind: apiresourcekind.ApiResourceKind_elasticsearch_kubernetes.String(),
+	}
 
 	ctx.Export(outputs.ElasticUsername, pulumi.String("elastic"))
 	ctx.Export(outputs.ElasticPasswordSecretName, pulumi.Sprintf("%s-es-elastic-user", elasticsearchKubernetes.Metadata.Name))
