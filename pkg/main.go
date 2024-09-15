@@ -14,7 +14,7 @@ func Resources(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.Elastics
 	locals := initializeLocals(ctx, stackInput)
 	//create kubernetes-provider from the credential in the stack-input
 	kubernetesProvider, err := pulumikubernetesprovider.GetWithKubernetesClusterCredential(ctx,
-		stackInput.KubernetesClusterCredential, "kubernetes")
+		stackInput.KubernetesCluster, "kubernetes")
 	if err != nil {
 		return errors.Wrap(err, "failed to setup gcp provider")
 	}
