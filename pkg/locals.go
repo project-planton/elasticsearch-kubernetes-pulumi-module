@@ -1,10 +1,9 @@
 package pkg
 
 import (
+	elasticsearchkubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/kubernetes/elasticsearchkubernetes/v1"
 	"fmt"
 	"github.com/plantoncloud/elasticsearch-kubernetes-pulumi-module/pkg/outputs"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/elasticsearchkubernetes"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"strconv"
@@ -17,7 +16,7 @@ type Locals struct {
 	ElasticsearchKubeServiceFqdn         string
 	ElasticsearchKubeServiceName         string
 	Namespace                            string
-	ElasticsearchKubernetes              *elasticsearchkubernetes.ElasticsearchKubernetes
+	ElasticsearchKubernetes              *elasticsearchkubernetesv1.ElasticsearchKubernetes
 	KibanaIngressExternalHostname        string
 	KibanaIngressInternalHostname        string
 	KibanaKubePortForwardCommand         string
@@ -29,7 +28,7 @@ type Locals struct {
 	Labels                               map[string]string
 }
 
-func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.ElasticsearchKubernetesStackInput) *Locals {
+func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetesv1.ElasticsearchKubernetesStackInput) *Locals {
 	locals := &Locals{}
 	//assign value for the local variable to make it available across the module.
 	locals.ElasticsearchKubernetes = stackInput.Target
@@ -41,7 +40,7 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetes.E
 		kuberneteslabelkeys.Organization: stackInput.Target.Spec.EnvironmentInfo.OrgId,
 		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
 		kuberneteslabelkeys.ResourceId:   stackInput.Target.Metadata.Id,
-		kuberneteslabelkeys.ResourceKind: apiresourcekind.ApiResourceKind_elasticsearch_kubernetes.String(),
+		kuberneteslabelkeys.ResourceKind: "elasticsearch_kubernetes",
 	}
 
 	ctx.Export(outputs.ElasticUsername, pulumi.String("elastic"))
