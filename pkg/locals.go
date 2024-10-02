@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	elasticsearchkubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/kubernetes/elasticsearchkubernetes/v1"
+	elasticsearchkubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/provider/kubernetes/elasticsearchkubernetes/v1"
 	"fmt"
 	"github.com/plantoncloud/elasticsearch-kubernetes-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
