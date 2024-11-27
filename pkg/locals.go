@@ -84,21 +84,21 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetesv1
 
 	if elasticsearchKubernetes.Spec.Ingress == nil ||
 		!elasticsearchKubernetes.Spec.Ingress.IsEnabled ||
-		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName == "" {
+		elasticsearchKubernetes.Spec.Ingress.DnsDomain == "" {
 		return locals
 	}
 
 	locals.ElasticsearchIngressExternalHostname = fmt.Sprintf("%s.%s", elasticsearchKubernetes.Metadata.Id,
-		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+		elasticsearchKubernetes.Spec.Ingress.DnsDomain)
 
 	locals.ElasticsearchIngressInternalHostname = fmt.Sprintf("%s-internal.%s", elasticsearchKubernetes.Metadata.Id,
-		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+		elasticsearchKubernetes.Spec.Ingress.DnsDomain)
 
 	locals.KibanaIngressExternalHostname = fmt.Sprintf("%s-kb.%s", elasticsearchKubernetes.Metadata.Id,
-		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+		elasticsearchKubernetes.Spec.Ingress.DnsDomain)
 
 	locals.KibanaIngressInternalHostname = fmt.Sprintf("%s-kb-internal.%s", elasticsearchKubernetes.Metadata.Id,
-		elasticsearchKubernetes.Spec.Ingress.EndpointDomainName)
+		elasticsearchKubernetes.Spec.Ingress.DnsDomain)
 
 	locals.IngressHostnames = []string{
 		locals.ElasticsearchIngressExternalHostname,
@@ -107,7 +107,7 @@ func initializeLocals(ctx *pulumi.Context, stackInput *elasticsearchkubernetesv1
 		locals.KibanaIngressInternalHostname,
 	}
 
-	locals.IngressCertClusterIssuerName = elasticsearchKubernetes.Spec.Ingress.EndpointDomainName
+	locals.IngressCertClusterIssuerName = elasticsearchKubernetes.Spec.Ingress.DnsDomain
 
 	locals.IngressCertSecretName = elasticsearchKubernetes.Metadata.Id
 
